@@ -42,10 +42,38 @@ public final class ImageDownloadOperation: Operation {
         sessionConfiguration.httpAdditionalHeaders = httpAdditionalHeaders
         session = Foundation.URLSession(configuration: sessionConfiguration, delegate: self,
                                         delegateQueue: OperationQueue.main)
-        
-        resumeDownload()
+        if let headers = httpAdditionalHeaders, let _ = headers["Authorization"]  {
+            self.donwloadFromAutheticateURL()
+        }else {
+            resumeDownload()
+        }
     }
-
+    
+    func donwloadFromAutheticateURL() {
+        guard  let headers = httpAdditionalHeaders  else {
+            completionHandler?(nil, NSError.init(domain: "Missing Headers", code: 10001, userInfo:nil))
+            return
+        }
+        var request = URLRequest(url: imageURL)
+        for (key, value) in headers {
+            if let valueItem = value as? String, let keyItem = key as? String {
+                request.setValue(valueItem, forHTTPHeaderField: keyItem)
+            }
+        }
+        request.httpMethod = "POST"
+        self.session?.dataTask(with: request, completionHandler: { (data, response, error) in
+            guard let data = data, error == nil else {
+                self.completionHandler?(nil, error as NSError?)                               // handle network error
+                return
+            }
+            let newImage = UIImage.imageWithCachedData(data)
+            let newImageInstance = ImageInstance(image: newImage, data: data, state: .new, url: self.imageURL)
+            if self.isCancelled {
+                return
+            }
+            self.completionHandler?(newImageInstance, nil)
+            }).resume()
+    }
     public override func cancel() {
         task?.cancel { [weak self] data in
             self?.resumeData = data
@@ -137,7 +165,10 @@ extension ImageDownloadOperation: URLSessionDownloadDelegate {
                            completionHandler: @escaping (URLRequest?) -> Void) {
         self.completionHandler?(nil, nil)
         imageURL = request.url!
-        resumeDownload()
+        if let headers = httpAdditionalHeaders, let _ = headers["Authorization"]  {
+        }else {
+            resumeDownload()
+        }
     }
 
 }

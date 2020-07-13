@@ -10,7 +10,7 @@ import UIKit
 
 public final class ImageManager {
 
-    public static let sharedManager = ImageManager()
+    public static let shared = ImageManager()
     
     fileprivate let downloadQueue = OperationQueue()
     fileprivate var downloadsInProgress = [URL: ImageDownloadOperation]()

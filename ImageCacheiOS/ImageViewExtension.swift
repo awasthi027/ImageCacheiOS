@@ -13,8 +13,11 @@ private var ImageViewAssociatedObjectKeyHandle: UInt8 = 1
 
 extension UIImageView {
 
-    public func setImage(withUrl url: URL, placeholder: UIImage? = nil, crossFadePlaceholder crossFade: Bool = true,
-                        cacheScaled: Bool = false, completion: ImageDownloaderCompletion? = nil) {
+    public func setImage(withUrl url: URL, placeholder: UIImage? = nil,
+                         crossFadePlaceholder crossFade: Bool = true,
+                        cacheScaled: Bool = false,
+                        completion: ImageDownloaderCompletion? = nil, headers: [AnyHashable: Any]? = nil) {
+        ImageManager.shared.httpAdditionalHeaders = headers
         if let placeholder = placeholder {
             image = placeholder
         }
@@ -29,7 +32,7 @@ extension UIImageView {
     private func downloadOperationWithURL(_ url: URL, placeholder: UIImage? = nil,
                                           crossFadePlaceholder crossFade: Bool = true, cacheScaled: Bool = false,
                                           completion: ImageDownloaderCompletion? = nil) -> ImageDownloadOperation? {
-        return ImageManager.sharedManager.downloadImage(atUrl: url, cacheScaled: cacheScaled, imageView: self) {
+        return ImageManager.shared.downloadImage(atUrl: url, cacheScaled: cacheScaled, imageView: self) {
             [weak self] imageInstance, error in
             DispatchQueue.main.async {
                 if let instance = imageInstance {
